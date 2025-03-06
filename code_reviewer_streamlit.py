@@ -48,7 +48,7 @@ def review_code(code, language, custom_prompt):
         return f"An error occurred: {str(e)}"
 
 def main():
-    st.title("ByteBuddy Code Reviewer")
+    st.title("ByteBuddy- Code Reviewer")
     
     # User inputs
     code = st.text_area("Paste your code here:", height=200)
