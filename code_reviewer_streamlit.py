@@ -1,80 +1,69 @@
-import streamlit as st
-import openai
 import os
+import openai
+import streamlit as st
 
-# Set up OpenAI API key
-openai.api_key = st.secrets["openai_api_key"]
+# Set OpenAI API key
+openai.api_key = os.getenv('OPENAI_API_KEY')
 
-# Language detection based on file extension
-def detect_language(file_name):
-    if file_name.endswith(".py"):
-        return "Python"
-    elif file_name.endswith(".cpp") or file_name.endswith(".c"):
-        return "C++"
-    elif file_name.endswith(".java"):
-        return "Java"
-    else:
-        return "Unknown"
-
-# Get code review feedback using OpenAI API
-def get_code_review(code, language, custom_prompt=""):
-    """Get code review feedback using OpenAI API."""
+def get_code_review(code, language, custom_prompt):
+    # Construct the prompt for the code review
     prompt = f"""
-    Review the following {language} code and provide feedback on:
-    1. Code quality and readability.
-    2. Potential bugs or issues.
-    3. Suggestions for improvement.
-    {custom_prompt}
-
-    Code:
+    Review the following {language} code for quality, style, and potential issues:
+    
     {code}
+    
+    Additional instructions: {custom_prompt}
     """
 
-    response = openai.Completion.create(
-        engine="text-davinci-003",  # Use GPT-3.5 or Codex
-        prompt=prompt,
-        max_tokens=500,  # Adjust based on the length of feedback
-        temperature=0.5,  # Balance creativity and accuracy
+    # Use the ChatCompletion API
+    response = openai.ChatCompletion.create(
+        model="gpt-4",  # or "gpt-3.5-turbo" if GPT-4 is not available
+        messages=[
+            {"role": "system", "content": "You are a helpful and knowledgeable code reviewer."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.5,  # Lower temperature for more focused and deterministic responses
+        max_tokens=1000   # Adjust based on the expected length of the review
     )
 
-    return response.choices[0].text.strip()
+    # Extract the feedback from the response
+    feedback = response['choices'][0]['message']['content']
+    return feedback
+
+def review_code(code, language, custom_prompt):
+    """
+    Function to review code using OpenAI's API.
+    """
+    if not code.strip():
+        return "Error: No code provided for review."
+    
+    try:
+        feedback = get_code_review(code, language, custom_prompt)
+        return feedback
+    except openai.error.RateLimitError:
+        return "Error: API rate limit exceeded. Please try again later."
+    except openai.error.AuthenticationError:
+        return "Error: Invalid API key. Please check your OpenAI API key."
+    except Exception as e:
+        return f"An error occurred: {str(e)}"
 
 def main():
-    st.set_page_config(page_title="AI Code Reviewer", page_icon=":computer:", layout="wide")
-    st.title("ByteBuddy: AI-Based Code Reviewer")
-    st.write("Upload your code files for AI-powered code review.")
-
-    # Upload multiple files
-    uploaded_files = st.file_uploader("Upload code files", type=["py", "cpp", "c", "java"], accept_multiple_files=True)
-    custom_prompt = st.text_area("Custom Prompt (optional)", placeholder="e.g., Focus on performance and security.")
-
-    if uploaded_files:
-        for uploaded_file in uploaded_files:
-            st.write(f"### Reviewing: `{uploaded_file.name}`")
-            code = uploaded_file.read().decode("utf-8")
-
-            # Detect the programming language
-            language = detect_language(uploaded_file.name)
-            st.write(f"**Detected Language:** {language}")
-
-            # Display the code
-            with st.expander("View Code"):
-                st.code(code, language=language.lower())
-
-            # Get code review
-            if st.button(f"Review {uploaded_file.name}"):
-                with st.spinner("Analyzing code..."):
-                    feedback = get_code_review(code, language, custom_prompt)
-                    st.write("### Feedback")
-                    st.write(feedback)
-
-                    # Download feedback
-                    st.download_button(
-                        label="Download Feedback",
-                        data=feedback,
-                        file_name=f"{uploaded_file.name}_review.txt",
-                        mime="text/plain",
-                    )
+    st.title("ByteBuddy Code Reviewer")
+    
+    # User inputs
+    code = st.text_area("Paste your code here:", height=200)
+    language = st.selectbox("Select the programming language:", ["Python", "JavaScript", "Java", "C++", "Other"])
+    custom_prompt = st.text_input("Any specific instructions for the review?")
+    
+    # Trigger code review
+    if st.button("Review Code"):
+        if code.strip() == "":
+            st.warning("Please paste some code to review.")
+        else:
+            with st.spinner("Reviewing your code..."):
+                feedback = review_code(code, language, custom_prompt)
+                st.success("Code review completed!")
+                st.write(feedback)
 
 if __name__ == "__main__":
     main()
