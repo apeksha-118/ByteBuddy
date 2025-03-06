@@ -41,7 +41,7 @@ def get_code_review(code, language, custom_prompt=""):
 
 def main():
     st.set_page_config(page_title="AI Code Reviewer", page_icon=":computer:", layout="wide")
-    st.title("AI-Based Code Reviewer")
+    st.title("ByteBuddy: AI-Based Code Reviewer")
     st.write("Upload your code files for AI-powered code review.")
 
     # Upload multiple files
