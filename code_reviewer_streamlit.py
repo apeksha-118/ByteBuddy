@@ -18,7 +18,7 @@ def get_code_review(code, language, custom_prompt):
     # Use the ChatCompletion API
     response = openai.ChatCompletion.create(
         model="gpt-4",  # or "gpt-3.5-turbo" if GPT-4 is not available
-        messages=[
+        messages=[ 
             {"role": "system", "content": "You are a helpful and knowledgeable code reviewer."},
             {"role": "user", "content": prompt}
         ],
@@ -50,15 +50,23 @@ def review_code(code, language, custom_prompt):
 def main():
     st.title("ByteBuddy- Code Reviewer")
     
+    # File uploader to upload code file
+    uploaded_file = st.file_uploader("Upload your code file", type=["py", "js", "java", "cpp", "txt"])
+    
     # User inputs
-    code = st.text_area("Paste your code here:", height=200)
     language = st.selectbox("Select the programming language:", ["Python", "JavaScript", "Java", "C++", "Other"])
     custom_prompt = st.text_input("Any specific instructions for the review?")
+
+    if uploaded_file is not None:
+        # Read the uploaded file's content
+        code = uploaded_file.read().decode("utf-8")
+    else:
+        code = st.text_area("Paste your code here:", height=200)
     
     # Trigger code review
     if st.button("Review Code"):
-        if code.strip() == "":
-            st.warning("Please paste some code to review.")
+        if not code.strip():
+            st.warning("Please provide code to review, either by pasting or uploading a file.")
         else:
             with st.spinner("Reviewing your code..."):
                 feedback = review_code(code, language, custom_prompt)
