@@ -1,85 +1,36 @@
 import os
-import openai
-import toml
 import streamlit as st
+import openai
+from dotenv import load_dotenv
 
-# Load the API key from the TOML file
-def load_api_key_from_toml():
-    try:
-        # Load the TOML file
-        config = toml.load("secrets.toml")  # Adjust the path if needed
-        
-        # Extract the API key using the key 'openai_api_key'
-        api_key = config['openai_api_key']
-        
-        return api_key
-    
-    except FileNotFoundError:
-        st.error("The 'secrets.toml' file containing the API key was not found.")
-        return None
-    except KeyError:
-        st.error("API key not found in the 'secrets.toml' file.")
-        return None
+# Load API key from .env file
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Set OpenAI API key from the secrets file
-openai.api_key = load_api_key_from_toml()
+# Streamlit UI
+st.set_page_config(page_title="ChatGPT with Streamlit", page_icon="🤖", layout="centered")
+st.title("🤖 OpenAI Chatbot")
+st.write("Ask me anything!")
 
-def get_code_review(code, language, custom_prompt):
-    prompt = f"""
-    Review the following {language} code for quality, style, and potential issues:
-    
-    {code}
-    
-    Additional instructions: {custom_prompt}
-    """
-    
-    try:
-        response = openai.completions.create(
-            model="gpt-4",  
-            prompt=prompt,  
-            max_tokens=1000  
-        )
-        
-        feedback = response['choices'][0]['text']  
-        return feedback
+# User input
+user_input = st.text_area("Enter your question:", "")
 
-    except openai.OpenAIError as e:  
-        return f"An error occurred with the OpenAI API: {str(e)}"
-    
-    except Exception as e:  
-        return f"An unexpected error occurred: {str(e)}"
-
-def review_code(code, language, custom_prompt):
-    if not code.strip():
-        return "Error: No code provided for review."
-    
-    try:
-        feedback = get_code_review(code, language, custom_prompt)
-        return feedback
-    except Exception as e:
-        return f"An error occurred: {str(e)}"
-
-def main():
-    st.title("ByteBuddy- Code Reviewer")
-    
-    uploaded_file = st.file_uploader("Upload your code file", type=["py", "js", "java", "cpp", "txt"])
-    
-    language = st.selectbox("Select the programming language:", ["Python", "JavaScript", "Java", "C++", "Other"])
-    custom_prompt = st.text_input("Any specific instructions for the review?")
-
-    if uploaded_file is not None:
-        code = uploaded_file.read().decode("utf-8")
+if st.button("Ask"):
+    if user_input.strip():
+        try:
+            # Call OpenAI API
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[{"role": "user", "content": user_input}]
+            )
+            # Display AI response
+            st.subheader("💡 Response:")
+            st.write(response["choices"][0]["message"]["content"])
+        except Exception as e:
+            st.error(f"Error: {e}")
     else:
-        code = st.text_area("Paste your code here:", height=200)
-    
-    if st.button("Review Code"):
-        if not code.strip():
-            st.warning("Please provide code to review, either by pasting or uploading a file.")
-        else:
-            with st.spinner("Reviewing your code..."):
-                feedback = review_code(code, language, custom_prompt)
-                st.success("Code review completed!")
-                st.write(feedback)
+        st.warning("Please enter a question.")
 
-if __name__ == "__main__":
-    main()
+# Footer
+st.markdown("---")
+st.markdown("Made with ❤️ using OpenAI & Streamlit")
