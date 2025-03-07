@@ -1,12 +1,30 @@
 import os
 import openai
+import toml
 import streamlit as st
 
-# Set OpenAI API key
-openai.api_key = os.getenv('OPENAI_API_KEY')
+# Load the API key from a TOML file
+def load_api_key_from_toml():
+    try:
+        # Load the TOML file
+        config = toml.load("secrets.toml")
+        
+        # Extract the API key from the [openai] section
+        api_key = config['openai']['api_key']
+        
+        return api_key
+    
+    except FileNotFoundError:
+        st.error("The 'secrets.toml' file containing the API key was not found.")
+        return None
+    except KeyError:
+        st.error("API key not found in the 'secrets.toml' file.")
+        return None
+
+# Set OpenAI API key from the secrets file
+openai.api_key = load_api_key_from_toml()
 
 def get_code_review(code, language, custom_prompt):
-    # Construct the prompt for the code review
     prompt = f"""
     Review the following {language} code for quality, style, and potential issues:
     
@@ -16,21 +34,19 @@ def get_code_review(code, language, custom_prompt):
     """
     
     try:
-        # Use the new completions.create method instead of ChatCompletion.create
         response = openai.completions.create(
-            model="gpt-4",  # Or another model like "gpt-3.5-turbo"
-            prompt=prompt,  # Pass the entire review prompt here
-            max_tokens=1000  # Adjust based on expected response length
+            model="gpt-4",  
+            prompt=prompt,  
+            max_tokens=1000  
         )
         
-        # Extract the feedback from the response
-        feedback = response['choices'][0]['text']  # In new versions, it's 'text' instead of 'message'
+        feedback = response['choices'][0]['text']  
         return feedback
 
-    except openai.OpenAIError as e:  # Catching all OpenAI-related exceptions
+    except openai.OpenAIError as e:  
         return f"An error occurred with the OpenAI API: {str(e)}"
     
-    except Exception as e:  # Catch other unexpected exceptions
+    except Exception as e:  
         return f"An unexpected error occurred: {str(e)}"
 
 def review_code(code, language, custom_prompt):
