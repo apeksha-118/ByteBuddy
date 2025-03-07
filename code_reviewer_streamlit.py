@@ -3,34 +3,43 @@ import streamlit as st
 import openai
 from dotenv import load_dotenv
 
-# Load API key from .env file
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Streamlit UI
-st.set_page_config(page_title="ChatGPT with Streamlit", page_icon="🤖", layout="centered")
-st.title("🤖 OpenAI Chatbot")
-st.write("Ask me anything!")
+st.set_page_config(page_title="ByteBuddy - AI Code Reviewer", layout="centered")
+st.title("ByteBuddy - AI Code Reviewer")
+st.write("Paste your code below for a detailed review.")
 
-# User input
-user_input = st.text_area("Enter your question:", "")
+user_input = st.text_area("Enter your code:", "")
 
-if st.button("Ask"):
+language = st.selectbox("Select the programming language:", ["Python", "Java", "C++", "C", "Other"])
+
+custom_prompt = st.text_input("Any specific instructions for the review?")
+
+if st.button("Review Code"):
     if user_input.strip():
         try:
-            # Call OpenAI API
+            prompt = f"""
+            Review the following {language} code for quality, style, potential issues, and improvements:
+            
+            {user_input}
+            
+            Additional instructions: {custom_prompt}
+            """
+
             response = openai.ChatCompletion.create(
                 model="gpt-4",
-                messages=[{"role": "user", "content": user_input}]
+                messages=[
+                    {"role": "system", "content": "You are a knowledgeable and helpful code reviewer."},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=1000
             )
-            # Display AI response
-            st.subheader("💡 Response:")
+            
+            st.subheader("💡 Code Review:")
             st.write(response["choices"][0]["message"]["content"])
+
         except Exception as e:
             st.error(f"Error: {e}")
     else:
-        st.warning("Please enter a question.")
-
-# Footer
-st.markdown("---")
-st.markdown("Made with ❤️ using OpenAI & Streamlit")
+        st.warning("Please enter some code for review.")
