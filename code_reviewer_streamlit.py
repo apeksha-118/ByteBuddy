@@ -27,16 +27,10 @@ def get_code_review(code, language, custom_prompt):
         feedback = response['choices'][0]['text']  # In new versions, it's 'text' instead of 'message'
         return feedback
 
-    except openai.error.RateLimitError as e:
-        return f"Error: API rate limit exceeded. Please try again later. ({str(e)})"
-    
-    except openai.error.AuthenticationError as e:
-        return f"Error: Invalid API key. Please check your OpenAI API key. ({str(e)})"
-
-    except openai.error.OpenAIError as e:
+    except openai.OpenAIError as e:  # Catching all OpenAI-related exceptions
         return f"An error occurred with the OpenAI API: {str(e)}"
     
-    except Exception as e:
+    except Exception as e:  # Catch other unexpected exceptions
         return f"An unexpected error occurred: {str(e)}"
 
 def review_code(code, language, custom_prompt):
