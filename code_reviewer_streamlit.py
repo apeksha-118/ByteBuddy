@@ -3,8 +3,8 @@ import streamlit as st
 import openai
 from dotenv import load_dotenv
 
-load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
+# Directly set API key here if dotenv doesn't work
+openai.api_key = "your-api-key-here"
 
 st.set_page_config(page_title="ByteBuddy - AI Code Reviewer", layout="centered")
 st.title("ByteBuddy - AI Code Reviewer")
