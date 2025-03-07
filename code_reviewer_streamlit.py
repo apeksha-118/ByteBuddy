@@ -33,7 +33,7 @@ def get_code_review(code, language, custom_prompt):
     except openai.error.AuthenticationError as e:
         return f"Error: Invalid API key. Please check your OpenAI API key. ({str(e)})"
 
-    except openai.OpenAIError as e:
+    except openai.error.OpenAIError as e:
         return f"An error occurred with the OpenAI API: {str(e)}"
     
     except Exception as e:
