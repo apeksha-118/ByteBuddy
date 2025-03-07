@@ -2,9 +2,11 @@ import os
 import openai
 import streamlit as st
 
+# Set OpenAI API key
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
 def get_code_review(code, language, custom_prompt):
+    # Construct the prompt for the code review
     prompt = f"""
     Review the following {language} code for quality, style, and potential issues:
     
@@ -12,24 +14,23 @@ def get_code_review(code, language, custom_prompt):
     
     Additional instructions: {custom_prompt}
     """
-
+    
     try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[ 
-                {"role": "system", "content": "You are a helpful and knowledgeable code reviewer."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.5,
-            max_tokens=1000
+        # Use the new completions.create method instead of ChatCompletion.create
+        response = openai.completions.create(
+            model="gpt-4",  # Or another model like "gpt-3.5-turbo"
+            prompt=prompt,  # Pass the entire review prompt here
+            max_tokens=1000  # Adjust based on expected response length
         )
-        feedback = response['choices'][0]['message']['content']
+        
+        # Extract the feedback from the response
+        feedback = response['choices'][0]['text']  # In new versions, it's 'text' instead of 'message'
         return feedback
 
-    except openai.RateLimitError as e:
+    except openai.error.RateLimitError as e:
         return f"Error: API rate limit exceeded. Please try again later. ({str(e)})"
     
-    except openai.AuthenticationError as e:
+    except openai.error.AuthenticationError as e:
         return f"Error: Invalid API key. Please check your OpenAI API key. ({str(e)})"
 
     except openai.OpenAIError as e:
