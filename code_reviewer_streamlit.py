@@ -7,7 +7,7 @@ import streamlit as st
 def load_api_key_from_toml():
     try:
         # Load the TOML file
-        config = toml.load(".streamlit\secrets.toml")  # Adjust the path if needed
+        config = toml.load("secrets.toml")  # Adjust the path if needed
         
         # Extract the API key using the key 'openai_api_key'
         api_key = config['openai_api_key']
