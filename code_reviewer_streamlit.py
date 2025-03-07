@@ -3,14 +3,14 @@ import openai
 import toml
 import streamlit as st
 
-# Load the API key from a TOML file
+# Load the API key from the TOML file
 def load_api_key_from_toml():
     try:
         # Load the TOML file
-        config = toml.load("secrets.toml")
+        config = toml.load("secrets.toml")  # Adjust the path if needed
         
-        # Extract the API key from the [openai] section
-        api_key = config['openai']['api_key']
+        # Extract the API key using the key 'openai_api_key'
+        api_key = config['openai_api_key']
         
         return api_key
     
